@@ -1,5 +1,7 @@
 #!/usr/bin/python3
+
 """This module defines a class to manage file storage for hbnb clone"""
+
 import json
 import shlex
 
@@ -10,7 +12,7 @@ class FileStorage:
     __objects = {}
 
     def all(self, cls=None):
-        """this module is doing give all data are in the dictonary"""
+        """Returns the list of objects of one type of class"""
         obj_dic = {}
         if cls:
             dic = self.__objects
@@ -19,7 +21,7 @@ class FileStorage:
                 knc = shlex.split(knc)
                 if (knc[0] == cls.__name__):
                     obj_dic[key] = self.__objects[key]
-            return (obj_dic)
+            return obj_dic
         else:
             return self.__objects
 
@@ -45,7 +47,6 @@ class FileStorage:
         from models.city import City
         from models.amenity import Amenity
         from models.review import Review
-
         classes = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'State': State, 'City': City, 'Amenity': Amenity,
@@ -61,14 +62,11 @@ class FileStorage:
             pass
 
     def close(self):
-        """reload only
-        """
+        """reload only"""
         self.reload()
-    
+
     def delete(self, obj=None):
-        """this module is delete value
-        """
+        """Deletes obj from __objects if it's inside"""
         if obj:
             bola = "{}.{}".format(type(obj).__name__, obj.id)
             del self.__objects[bola]
-
