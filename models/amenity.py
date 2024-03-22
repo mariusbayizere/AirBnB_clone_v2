@@ -1,19 +1,15 @@
 #!/usr/bin/python3
-"""
-Module for Amenity class.
-"""
-
-from models.base_model import BaseModel, Base
+""" this module is amenity Module """
+import os
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
+from models.base_model import BaseModel, Base
+
 
 class Amenity(BaseModel, Base):
-    """
-    Amenity class that inherits from BaseModel and Base.
-    Represents amenities in the database.
-    """
+    """represent the amenity table."""
     __tablename__ = 'amenities'
-
-    name = Column(String(128), nullable=False)
-    place_amenities = relationship("Place", secondary="place_amenity")
+    name = Column(
+        String(128), nullable=False
+    ) if os.getenv('HBNB_TYPE_STORAGE') == 'db' else ''
