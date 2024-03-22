@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """This module defines a class to manage file storage for hbnb clone"""
 import json
+import shlex
 
 
 class FileStorage:
@@ -8,9 +9,19 @@ class FileStorage:
     __file_path = 'file.json'
     __objects = {}
 
-    def all(self):
-        """Returns a dictionary of models currently in storage"""
-        return FileStorage.__objects
+    def all(self, cls=None):
+        """this module is doing give all data are in the dictonary"""
+        obj_dic = {}
+        if cls:
+            dic = self.__objects
+            for key in dic:
+                knc = key.replace('.', ' ')
+                knc = shlex.split(knc)
+                if (knc[0] == cls.__name__):
+                    obj_dic[key] = self.__objects[key]
+            return (obj_dic)
+        else:
+            return self.__objects
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
@@ -36,15 +47,28 @@ class FileStorage:
         from models.review import Review
 
         classes = {
-                    'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                    'State': State, 'City': City, 'Amenity': Amenity,
-                    'Review': Review
-                  }
+            'BaseModel': BaseModel, 'User': User, 'Place': Place,
+            'State': State, 'City': City, 'Amenity': Amenity,
+            'Review': Review
+        }
         try:
             temp = {}
             with open(FileStorage.__file_path, 'r') as f:
                 temp = json.load(f)
                 for key, val in temp.items():
-                        self.all()[key] = classes[val['__class__']](**val)
+                    self.all()[key] = classes[val['__class__']](**val)
         except FileNotFoundError:
             pass
+
+    def close(self):
+        """reload only
+        """
+        self.reload()
+    
+    def delete(self, obj=None):
+        """this module is delete value
+        """
+        if obj:
+            bola = "{}.{}".format(type(obj).__name__, obj.id)
+            del self.__objects[bola]
+
