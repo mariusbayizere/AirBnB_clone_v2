@@ -1,88 +1,80 @@
-# Redo the task #0 but by using Puppe
-$nginx_conf = "server {
+# Install nginx package
+package { 'nginx':
+  ensure => installed,
+}
+
+# Create web_static directory
+file { '/data/web_static':
+  ensure => directory,
+  owner  => 'ubuntu',
+  group  => 'ubuntu',
+  mode   => '0755',
+}
+
+# Create releases and shared directories
+file { ['/data/web_static/releases', '/data/web_static/shared']:
+  ensure => directory,
+  owner  => 'root',
+  group  => 'root',
+  mode   => '0755',
+}
+
+# Create symbolic link 'current'
+file { '/data/web_static/current':
+  ensure => link,
+  target => '/data/web_static/releases/test',
+  owner  => 'root',
+  group  => 'root',
+  mode   => '0777',
+}
+
+# Create index.html in releases/test directory
+file { '/data/web_static/releases/test/index.html':
+  ensure  => present,
+  content => "<html>\n  <head>\n  </head>\n  <body>\n    Holberton School\n  </body>\n</html>\n",
+  owner   => 'root',
+  group   => 'root',
+  mode    => '0644',
+}
+
+# Configure nginx to serve the content
+file { '/etc/nginx/sites-available/default':
+  ensure  => file,
+  content => "
+server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    add_header X-Served-By ${hostname};
-    root   /var/www/html;
-    index  index.html index.htm;
+
+    root /var/www/html;
+
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name _;
+
     location /hbnb_static {
         alias /data/web_static/current;
-        index index.html index.htm;
     }
-    location /redirect_me {
-        return 301 https://th3-gr00t.tk;
+
+    location / {
+        try_files \$uri \$uri/ =404;
     }
-    error_page 404 /404.html;
-    location /404 {
-      root /var/www/html;
-      internal;
-    }
-}"
-
-package { 'nginx':
-  ensure   => 'present',
-  provider => 'apt'
-} ->
-
-file { '/data':
-  ensure  => 'directory'
-} ->
-
-file { '/data/web_static':
-  ensure => 'directory'
-} ->
-
-file { '/data/web_static/releases':
-  ensure => 'directory'
-} ->
-
-file { '/data/web_static/releases/test':
-  ensure => 'directory'
-} ->
-
-file { '/data/web_static/shared':
-  ensure => 'directory'
-} ->
-
-file { '/data/web_static/releases/test/index.html':
-  ensure  => 'present',
-  content => "Holberton School Puppet\n"
-} ->
-
-file { '/data/web_static/current':
-  ensure => 'link',
-  target => '/data/web_static/releases/test'
-} ->
-
-exec { 'chown -R ubuntu:ubuntu /data/':
-  path => '/usr/bin/:/usr/local/bin/:/bin/'
+}
+",
+  require => Package['nginx'],
+  notify  => Service['nginx'],
 }
 
-file { '/var/www':
-  ensure => 'directory'
-} ->
-
-file { '/var/www/html':
-  ensure => 'directory'
-} ->
-
-file { '/var/www/html/index.html':
-  ensure  => 'present',
-  content => "Holberton School Nginx\n"
-} ->
-
-file { '/var/www/html/404.html':
-  ensure  => 'present',
-  content => "Ceci n'est pas une page\n"
-} ->
-
-exec { 'nginx restart':
-  path => '/etc/init.d/'
+# Enable the configuration and restart nginx
+file { '/etc/nginx/sites-enabled/default':
+  ensure  => 'link',
+  target  => '/etc/nginx/sites-available/default',
+  require => File['/etc/nginx/sites-available/default'],
+  notify  => Service['nginx'],
 }
 
-file { '/etc/nginx/sites-available/default':
-  ensure  => 'present',
-  content => $nginx_conf
-} ->
-
-
+# Restart nginx service
+service { 'nginx':
+  ensure    => running,
+  enable    => true,
+  subscribe => File['/etc/nginx/sites-enabled/default'],
+}
